@@ -21,8 +21,8 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 LPCTSTR	lpszCommName = TEXT("com1");
 COMMCONFIG	cc;
 HANDLE hComm;
-LPCOMMPROP lpCommProp;
-LPDCB lpDCB;
+COMMPROP CommProp;
+DCB dcb;
 COMMTIMEOUTS timeouts;
 char buffer[1];
 DWORD read, written;
@@ -65,7 +65,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 
 	// Initializes Com Port
 	if ((hComm = CreateFile(lpszCommName, GENERIC_READ | GENERIC_WRITE, 0,
-		NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL))
+		NULL, OPEN_EXISTING, 0, NULL))
 		== INVALID_HANDLE_VALUE)
 	{
 		MessageBox(NULL, TEXT("Error opening COM port:"), TEXT(""), MB_OK);
@@ -79,25 +79,25 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	};
 
 	// Gets COM port properties and store in lpCommProp
-	if (!GetCommProperties(hComm, lpCommProp)) {
+	if (!GetCommProperties(hComm, &CommProp)) {
 		MessageBox(NULL, TEXT("Error initializing COMMPROP:"), TEXT(""), MB_OK);
 		return FALSE;
 	}
 
 	// Gets current DCB, used for configuring serial port properties
-	if (!GetCommState(hComm, lpDCB)) {
+	if (!GetCommState(hComm, &dcb)) {
 		MessageBox(NULL, TEXT("Error getting COMM state:"), TEXT(""), MB_OK);
 		return FALSE;
 	}
 
 	// Changes Serial Port settings, sets 9600 bps, no parity, 8 data bits, and 1 stop bit
-	if (!BuildCommDCB("96,N,8,1", lpDCB)) {
+	if (!BuildCommDCB("24,N,8,1", &dcb)) {
 		MessageBox(NULL, TEXT("Error building COMM DCB:"), TEXT(""), MB_OK);
 		return FALSE;
 	}
 
 	// Sets the Com state using initial contents of DCB
-	if (!SetCommState(hComm, lpDCB)) {
+	if (!SetCommState(hComm, &dcb)) {
 		MessageBox(NULL, TEXT("Unable to set Com state:"), TEXT(""), MB_OK);
 		return FALSE;
 	}
@@ -109,24 +109,17 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	timeouts.WriteTotalTimeoutMultiplier = 1;
 	timeouts.WriteTotalTimeoutConstant = 1;
 
-	// terminal loop
-	do {
-		// check for data on port and display it on screen.
+	// reads input from Serial Port
+	while (1) {
 		ReadFile(hComm, buffer, sizeof(buffer), &read, NULL);
 		if (read)
 			hdc = GetDC(hwnd);
-			sprintf_s(str, "%c", buffer); // Convert char to string
-			TextOut(hdc, 10 * x_cordinate, y_cordinate, str, strlen(str)); // output character	
+			OutputDebugStringA(buffer);
+			TextOut(hdc, 10 * x_cordinate, y_cordinate, buffer, strlen(buffer)); // output character	
 			x_cordinate++; // increment the screen x-coordinate
 			ReleaseDC(hwnd, hdc); // Release device context
+	}
 
-		// check for keypress, and write any out the port.
-		if (kbhit()) {
-			ch = getch();
-			WriteFile(hComm, &ch, 1, &written, NULL);
-		}
-		// until user hits ctrl-backspace.
-	} while (ch != 127);
 
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
