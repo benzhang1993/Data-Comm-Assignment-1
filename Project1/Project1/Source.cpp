@@ -109,22 +109,22 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	timeouts.WriteTotalTimeoutMultiplier = 1;
 	timeouts.WriteTotalTimeoutConstant = 1;
 
-	// reads input from Serial Port
-	while (1) {
-		ReadFile(hComm, buffer, sizeof(buffer), &read, NULL);
-		if (read)
-			hdc = GetDC(hwnd);
-			OutputDebugStringA(buffer);
-			TextOut(hdc, 10 * x_cordinate, y_cordinate, buffer, strlen(buffer)); // output character	
-			x_cordinate++; // increment the screen x-coordinate
-			ReleaseDC(hwnd, hdc); // Release device context
-	}
-
 
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
 		TranslateMessage(&Msg);
 		DispatchMessage(&Msg);
+	}
+
+	// reads input from Serial Port
+	while (1) {
+		ReadFile(hComm, buffer, sizeof(buffer), &read, NULL);
+		if (read)
+			hdc = GetDC(hwnd);
+		OutputDebugStringA(buffer);
+		TextOut(hdc, 10 * x_cordinate, y_cordinate, buffer, strlen(buffer)); // output character	
+		x_cordinate++; // increment the screen x-coordinate
+		ReleaseDC(hwnd, hdc); // Release device context
 	}
 
 	return Msg.wParam;
@@ -153,36 +153,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			break;
 		case IDM_DISCONNECT:
 			// TODO: Disconnect
-			break;
-		}
-		break;
-	case WM_RBUTTONDOWN:		// Process right button
-		response = MessageBox(hwnd, TEXT("Press One:"), TEXT("Right Button"),
-			MB_ABORTRETRYIGNORE);
-		switch (response)
-		{
-		case IDABORT:
-			MessageBox(hwnd, TEXT(""), TEXT("Abort"), MB_OK);
-			break;
-		case IDRETRY:
-			MessageBox(hwnd, TEXT(""), TEXT("Retry"), MB_OK);
-			break;
-		case IDIGNORE:
-			MessageBox(hwnd, TEXT(""), TEXT("Ignore"), MB_OK);
-			break;
-		}
-		break;
-
-	case WM_LBUTTONDOWN:		// Process left button
-		response = MessageBox(hwnd, TEXT("Conitnue?"), TEXT("Left Button"),
-			MB_ICONHAND | MB_YESNO);
-		switch (response)
-		{
-		case IDYES:
-			MessageBox(hwnd, TEXT("Press Button"), TEXT("Yes"), MB_OK);
-			break;
-		case IDNO:
-			MessageBox(hwnd, TEXT("Press Button"), TEXT("No"), MB_OK);
 			break;
 		}
 		break;
