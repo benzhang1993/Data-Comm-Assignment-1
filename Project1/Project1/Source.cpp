@@ -19,6 +19,7 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 DWORD WINAPI readLoop(LPVOID);
 VOID writeLoop(MSG);
 BOOL connect();
+VOID disconnect();
 
 #pragma warning (disable: 4096)
 
@@ -96,7 +97,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			connect();
 			break;
 		case IDM_DISCONNECT:
-			// TODO: Disconnect
+			disconnect();
 			break;
 		}
 		break;
@@ -104,11 +105,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 	case WM_CHAR:	// Process keystroke
 		hdc = GetDC(hwnd);			 // get device context
 
-		// TODO: IMPLEMENT DELETE BUTTON
+		// TODO: IMPLEMENT DELETE BUTTON and enter button
 
 		sprintf_s(str, "%c", (char)wParam); // Convert char to string
-		//TextOut(hdc, 10 * x_cordinate, y_cordinate, str, strlen(str)); // output character	
-		//x_cordinate++; // increment the screen x-coordinate
 		WriteFile(hComm, str, 1, &written, NULL);
 		ReleaseDC(hwnd, hdc); // Release device context
 		break;
@@ -195,4 +194,8 @@ BOOL connect() {
 	timeouts.ReadTotalTimeoutConstant = 1;
 	timeouts.WriteTotalTimeoutMultiplier = 1;
 	timeouts.WriteTotalTimeoutConstant = 1;
+}
+
+VOID disconnect() {
+	CloseHandle(hComm);
 }
