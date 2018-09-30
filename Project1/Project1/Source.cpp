@@ -109,6 +109,17 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	timeouts.WriteTotalTimeoutMultiplier = 1;
 	timeouts.WriteTotalTimeoutConstant = 1;
 
+	// reads input from Serial Port
+	while (1) {
+		ReadFile(hComm, buffer, sizeof(buffer), &read, NULL);
+		if (read) {
+			hdc = GetDC(hwnd);
+			OutputDebugStringA(buffer);
+			TextOut(hdc, 10 * x_cordinate, y_cordinate, buffer, strlen(buffer)); // output character	
+			x_cordinate++; // increment the screen x-coordinate
+			ReleaseDC(hwnd, hdc); // Release device context
+		}
+	}
 
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
@@ -116,16 +127,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 		DispatchMessage(&Msg);
 	}
 
-	// reads input from Serial Port
-	while (1) {
-		ReadFile(hComm, buffer, sizeof(buffer), &read, NULL);
-		if (read)
-			hdc = GetDC(hwnd);
-		OutputDebugStringA(buffer);
-		TextOut(hdc, 10 * x_cordinate, y_cordinate, buffer, strlen(buffer)); // output character	
-		x_cordinate++; // increment the screen x-coordinate
-		ReleaseDC(hwnd, hdc); // Release device context
-	}
 
 	return Msg.wParam;
 }
@@ -159,16 +160,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 
 	case WM_CHAR:	// Process keystroke
 		hdc = GetDC(hwnd);			 // get device context
-		if (wParam == 13) {		// catches enter key and move iterator to next line
-			y_cordinate += 15;
-			x_cordinate = -1;
-		}
 
 		// TODO: IMPLEMENT DELETE BUTTON
 
 		sprintf_s(str, "%c", (char)wParam); // Convert char to string
-		TextOut(hdc, 10 * x_cordinate, y_cordinate, str, strlen(str)); // output character	
-		x_cordinate++; // increment the screen x-coordinate
+		//TextOut(hdc, 10 * x_cordinate, y_cordinate, str, strlen(str)); // output character	
+		//x_cordinate++; // increment the screen x-coordinate
+		WriteFile(hComm, str, 1, &written, NULL);
 		ReleaseDC(hwnd, hdc); // Release device context
 		break;
 
