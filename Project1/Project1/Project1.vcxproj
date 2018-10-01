@@ -115,9 +115,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Physical.cpp" />
+    <ClCompile Include="Session.cpp" />
+    <ClCompile Include="Application.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="Physical.h" />
+    <ClInclude Include="Session.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
