@@ -19,7 +19,6 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 DWORD WINAPI readLoop(LPVOID);
 VOID writeLoop(MSG);
 BOOL connect();
-VOID disconnect();
 
 #pragma warning (disable: 4096)
 
@@ -36,11 +35,12 @@ static unsigned x_cordinate = 0;
 static unsigned y_cordinate = 0;
 int ch;
 MSG Msg;
+BOOL connected = FALSE;
+HWND hwnd;
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 	LPSTR lspszCmdParam, int nCmdShow)
 {
-	HWND hwnd;
 	WNDCLASSEX Wcl;
 
 	OutputDebugStringA("hello");
@@ -67,10 +67,14 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hprevInstance,
 		600, 400, NULL, NULL, hInst, NULL);
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
-	
-	DWORD threadId;
-	CreateThread(NULL, 0, readLoop, (LPVOID) hwnd, 0, &threadId);
-	writeLoop(Msg);
+
+	while (GetMessage(&Msg, NULL, 0, 0))
+	{
+		TranslateMessage(&Msg);
+		DispatchMessage(&Msg);
+	}
+
+
 
 	return Msg.wParam;
 }
@@ -97,7 +101,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			connect();
 			break;
 		case IDM_DISCONNECT:
-			disconnect();
+			// TODO: Disconnect
 			break;
 		}
 		break;
@@ -105,10 +109,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 	case WM_CHAR:	// Process keystroke
 		hdc = GetDC(hwnd);			 // get device context
 
-		// TODO: IMPLEMENT DELETE BUTTON and enter button
+		// TODO: IMPLEMENT DELETE BUTTON
 
-		sprintf_s(str, "%c", (char)wParam); // Convert char to string
-		WriteFile(hComm, str, 1, &written, NULL);
+		char temp[1];
+		temp[0] = (char)wParam; // Convert char to string
+		//TextOut(hdc, 10 * x_cordinate, y_cordinate, str, strlen(str)); // output character	
+		//x_cordinate++; // increment the screen x-coordinate
+		WriteFile(hComm, temp, sizeof(char), &written, NULL);
 		ReleaseDC(hwnd, hdc); // Release device context
 		break;
 
@@ -128,23 +135,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 }
 
 DWORD WINAPI readLoop(LPVOID hwnd) {
-	while (1) {
+	while (connected) {
 		ReadFile(hComm, buffer, sizeof(buffer), &read, NULL);
 		if (read) {
-			hdc = GetDC((HWND) hwnd);
+			hdc = GetDC((HWND)hwnd);
 			TextOut(hdc, 10 * x_cordinate, y_cordinate, buffer, strlen(buffer)); // output character	
 			x_cordinate++; // increment the screen x-coordinate
-			ReleaseDC((HWND) hwnd, hdc); // Release device context
+			ReleaseDC((HWND)hwnd, hdc); // Release device context
 		}
 	}
-}
-
-VOID writeLoop(MSG Msg) {
-	while (GetMessage(&Msg, NULL, 0, 0))
-	{
-		TranslateMessage(&Msg);
-		DispatchMessage(&Msg);
-	}
+	ExitThread(0);
 }
 
 BOOL connect() {
@@ -194,8 +194,13 @@ BOOL connect() {
 	timeouts.ReadTotalTimeoutConstant = 1;
 	timeouts.WriteTotalTimeoutMultiplier = 1;
 	timeouts.WriteTotalTimeoutConstant = 1;
+
+	connected = TRUE;
+	CreateThread(NULL, 0, readLoop, hwnd, 0, NULL);
+
 }
 
-VOID disconnect() {
+BOOL disconnect() {
+	connected = FALSE;
 	CloseHandle(hComm);
 }
